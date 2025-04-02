@@ -1,22 +1,136 @@
+---
+import "/src/styles/global.css"
+
+import { ScrollUpButton } from "@/components/ArrowScrollUp"
+import Header from "@/components/Header.astro"
+import { ModeToggle } from "@/components/ModeToggle"
+import { AstroFont } from "astro-font"
+import { SEO } from "astro-seo"
+
+export interface Props {
+  title?: string
+  frontmatter?: {
+    title: string
+    file: string
+    url: string
+  }
+}
+
+const { frontmatter, title: baseTitle } = Astro.props
+const title = baseTitle ?? frontmatter?.title
+
+const basedUrl = (url: string) => `${import.meta.env.BASE_URL}/${url}`
+---
+
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
+  <head>
+    <SEO
+      charset="UTF-8"
+      titleDefault="The Dendrobate Doctor"
+      titleTemplate="%s - The Dendrobate Doctor"
+      title={title}
+      description=""
+      extend={{
+        link: [{ rel: "icon", type: "image/svg+xml", href: basedUrl("favicon.svg") }],
+        meta: [
+          { name: "viewport", content: "width=device-width" },
+          { name: "robots", content: "max-image-preview:large" },
+        ],
+      }}
+    />
+    <AstroFont
+      config={[
+        {
+          name: "Gantari",
+          src: [
+            {
+              style: "lighter",
+              weight: "100",
+              path: import.meta.env.BASE_URL + "/fonts/gantari/gantari-latin.woff2",
+            },
+            {
+              style: "light",
+              weight: "200",
+              path: import.meta.env.BASE_URL + "/fonts/gantari/gantari-latin.woff2",
+            },
+            {
+              style: "normal",
+              weight: "350",
+              path: import.meta.env.BASE_URL + "/fonts/gantari/gantari-latin.woff2",
+            },
+            {
+              style: "bold",
+              weight: "700",
+              path: import.meta.env.BASE_URL + "/fonts/gantari/gantari-latin.woff2",
+            },
+            {
+              style: "extrabold",
+              weight: "900",
+              path: import.meta.env.BASE_URL + "/fonts/gantari/gantari-latin.woff2",
+            },
+          ],
+          preload: true,
+          display: "swap",
+          selector: "body",
+          fallback: "sans-serif",
+        },
+        {
+          name: "Get Show",
+          src: [
+            {
+              style: "lighter",
+              weight: "100",
+              path: import.meta.env.BASE_URL + "/fonts/get-show/get-show-latin.woff2",
+            },
+            {
+              style: "light",
+              weight: "200",
+              path: import.meta.env.BASE_URL + "/fonts/get-show/get-show-latin.woff2",
+            },
+            {
+              style: "normal",
+              weight: "350",
+              path: import.meta.env.BASE_URL + "/fonts/get-show/get-show-latin.woff2",
+            },
+            {
+              style: "bold",
+              weight: "700",
+              path: import.meta.env.BASE_URL + "/fonts/get-show/get-show-latin.woff2",
+            },
+            {
+              style: "extrabold",
+              weight: "900",
+              path: import.meta.env.BASE_URL + "/fonts/get-show/get-show-latin.woff2",
+            },
+          ],
+          preload: true,
+          display: "swap",
+          selector: "h1",
+          fallback: "sans-serif",
+        },
+      ]}
+    />
+    <script is:inline>
+      ;(function (w, d, s, l, i) {
+        w[l] = w[l] || []
+        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" })
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != "dataLayer" ? "&l=" + l : ""
+        j.async = true
+        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl
+        f.parentNode.insertBefore(j, f)
+      })(window, document, "script", "dataLayer", import.meta.env.GTM_KEY)
+    </script>
+  </head>
+  <body>
+    <Header />
+    <div class="relative md:bg-transparent print:bg-white" }>
+      <main class="max-w-6xl md:px-4 mx-auto backdrop-blur-sm bg-neutral-200/20 print:pt-0 dark:bg-neutral-900/20">
+        <slot />
+        <ScrollUpButton />
+      </main>
+    </div>
+  </body>
 </html>
-
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>

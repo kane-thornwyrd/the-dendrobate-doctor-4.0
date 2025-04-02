@@ -1,0 +1,142 @@
+---
+import Layout from "@/layouts/Layout.astro"
+import { getCollection, getEntry } from "astro:content"
+import { experimental_AstroContainer } from "astro/container"
+
+import KissKissBankBankLink from "../../components/kissKissBankBankLink.astro"
+
+const DAYS = [
+  "dimanche",
+  "lundi",
+  "mardi",
+  "mercredi",
+  "jeudi",
+  "vendredi",
+  "samedi",
+]
+
+const MONTHS = [
+  "janvier",
+  "février",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "août",
+  "septembre",
+  "octobre",
+  "novembre",
+  "décembre",
+]
+
+export async function getStaticPaths() {
+  const edl = await getCollection("edl")
+  return edl.map(entry => ({
+    params: {
+      date: entry.id,
+    },
+  }))
+}
+
+const { date } = Astro.params
+
+const dateToTitle = (d: string) => {
+  //@ts-ignore
+  const td: Date = new Date(Date.parse(d.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3T00:00:00Z")))
+  return `${DAYS[td.getDay()]} ${td.getDate()} ${MONTHS[td.getMonth()]} ${td.getFullYear()}`
+}
+
+const entry = await getEntry("edl", date)
+if (!entry) {
+  throw new Error(`Could not find ÉdL "${date}"`)
+}
+
+const machineText = (content: string) => content.replace(/ +/gi, "-").replace(/[^a-z-]/gi, "")
+
+const incrHeadings = (_: string, i: string) => `<h${parseInt(i, 10) + 1}`
+const headings: string[] = []
+const extractHeadings = (_: string, heading: string) => {
+  headings.push(`<li><a href="#${machineText(heading)}">${heading}</a></li>`)
+  return _
+}
+const anchorHeadings =
+  (machineTranslator: (a: string) => string) => (heading: string, index: number, content: string) => {
+    const machineContent = machineTranslator(content)
+    return `<h${index} id="${machineContent}">${content}</h${index}>`
+  }
+
+type filterConf = [reg: RegExp | string, transformer: ((a: string, b?: any, c?: any) => string) | string]
+
+const container = await experimental_AstroContainer.create()
+const kkbbPicture = await container.renderToString(KissKissBankBankLink)
+
+const contentFilters: filterConf[] = [
+  [/\<p\>\s*\*\*\*\<\/p\>/gi, ""],
+  [/\<p\>\s*<\/p\>/gi, ""],
+  [/\<h(\d)/gi, incrHeadings],
+  [
+    /\<img([^\>]+)\>/gi,
+    (raw, data) => {
+      const srcRegEx = /src="(?<src>[^"]+)"/i
+      const altRegEx = /alt="(?<alt>[^"]+)"/i
+      const src = data.match(srcRegEx).groups.src
+      const alt = data.match(altRegEx)?.groups.alt
+      return alt
+        ? `<h2>Illustration de la semaine</h2><figure class="drop-shadow-2xl shadow-2xl p-6 border-2 border-emerald-900 bg-neutral-200 dark:shadow-emerald-300">
+        <img src="${src}" alt="${alt}">
+        <figcaption class="font-bold text-center">${alt}</figcaption>
+      </figure>`
+        : raw
+    },
+  ],
+  [/\<h\d>([^<]+)<\/h\d>/gi, extractHeadings],
+  [/\<h(\d)>([^<]+)<\/h\d>/gi, anchorHeadings(machineText)],
+  [
+    "KisskissBankbank (https://www.kisskissbankbank.com/fr/projects/the-dendrobate-doctor)",
+    kkbbPicture,
+  ],
+  [
+    "<p>Bienvenue à tous sur l’Écho des Labos.</p>",
+    () => `<p>Bienvenue à tous sur l’Écho des Labos.</p>
+      <div id="toc_container">
+        <h5 class="toc_title">Index</h5>
+        <ol class="toc_list">
+        ${headings.join("\n")}
+        </ol>
+      </div>`,
+  ],
+]
+---
+
+<Layout>
+  <div class="p-4 px-16 w-fit mx-auto bg-neutral-200 dark:bg-neutral-900">
+    <h1
+      class="text-center text-white"
+      style="text-shadow: 0 1px 0 hsl(174,5%,80%),
+	                 0 2px 0 hsl(174,5%,75%),
+	                 0 3px 0 hsl(174,5%,70%),
+	                 0 4px 0 hsl(174,5%,66%),
+	                 0 5px 0 hsl(174,5%,64%),
+	                 0 6px 0 hsl(174,5%,62%),
+	                 0 7px 0 hsl(174,5%,61%),
+	                 0 8px 0 hsl(174,5%,60%),
+	
+	                 0 0 5px rgba(0,0,0, 0.2),
+	                0 1px 3px rgba(0,0,0,0.25),
+	                0 3px 5px rgba(0,0,0,0.25),
+	               0 5px 10px rgba(0,0,0,0.25),
+	              0 10px 10px rgba(0,0,0,0.25),
+	              0 20px 20px rgba(0,0,0,0.35);"
+    >
+      l'Écho des Labos<br < />{dateToTitle(date)}
+    </h1>
+    <div
+      class="prose dark:prose-invert mx-auto prose-headings:font-light prose-h1:text-6xl prose-h2:text-5xl prose-h3:text-4xl prose-h4:text-3xl prose-h5:text-2xl prose-headings:border-b-2 prose-headings:border-t-2 prose-a:text-emerald-900 dark:prose-a:text-emerald-400 prose-headings:border-emerald-900 prose-headings:text-center prose-headings:py-4 prose-headings:bg-neutral-200 dark:prose-headings:bg-emerald-900 dark:prose-headings:shadow-emerald-300 dark:prose-headings:shadow-md"
+      set:html={contentFilters.reduce(
+        (prev: string, current: filterConf) => prev.replace.apply(prev, current as [any, any]),
+        entry.data.content
+      )}
+    />
+  </div>
+</Layout>

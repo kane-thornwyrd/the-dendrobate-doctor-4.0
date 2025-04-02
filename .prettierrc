@@ -1,0 +1,26 @@
+{
+  "printWidth": 120,
+  "semi": false,
+  "arrowParens": "avoid",
+  "plugins": [
+    "@ianvs/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-multiline-arrays",
+    "prettier-plugin-organize-attributes",
+    "prettier-plugin-astro"
+  ],
+  "importOrder": [
+    "^@core/(.*)$", 
+    "", 
+    "^@server/(.*)$", 
+    "", 
+    "^@ui/(.*)$", 
+    "", 
+    "^[./]"
+  ],
+  "importOrderParserPlugins": ["typescript", "jsx", "decorators-legacy"],
+  "importOrderTypeScriptVersion": "5.0.0",
+  "importOrderCaseSensitive": false,
+  "prettier-multiline-arrays-next-threshold": 2,
+  "attributeGroups": ["^class$", "^(id|name)$", "$DEFAULT", "^aria-"]
+}

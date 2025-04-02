@@ -18,7 +18,9 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  site: "https://www.the-dendrobate-doctor.fr",
+  // site: "https://www.the-dendrobate-doctor.fr",
+  site: "https://kane-thornwyrd.github.io",
+  base: "the-dendrobate-doctor-4.0",
   integrations: [
     mdx({
       shikiConfig: {

@@ -5,7 +5,7 @@ import react from "@astrojs/react"
 import sitemap from "@astrojs/sitemap"
 import tailwindcss from "@tailwindcss/vite"
 import icon from "astro-icon"
-import opengraphImages, { presets } from "astro-opengraph-images"
+// import opengraphImages, { presets } from "astro-opengraph-images"
 import pageInsight from "astro-page-insight"
 import pagefind from "astro-pagefind"
 import { defineConfig } from "astro/config"
@@ -34,20 +34,20 @@ export default defineConfig({
     react(),
     icon(),
     pagefind(),
-    opengraphImages({
-      options: {
-        fonts: [
-          {
-            name: "Roboto",
-            weight: 400,
-            style: "normal",
-            data: fs.readFileSync("node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff"),
-          },
-        ],
-      },
-      render: presets.blackAndWhite,
-    }),
-    ,
+    // opengraphImages({
+    //   options: {
+    //     fonts: [
+    //       {
+    //         name: "Roboto",
+    //         weight: 400,
+    //         style: "normal",
+    //         data: fs.readFileSync("node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff"),
+    //       },
+    //     ],
+    //   },
+    //   render: presets.blackAndWhite,
+    // }),
+    // ,
     pageInsight(),
   ],
 })

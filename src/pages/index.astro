@@ -1,8 +1,22 @@
 ---
 import "../styles/global.css"
 
-import Welcome from "../components/Welcome.astro"
+import { EdlCarousel, type EdlItem } from "@/components/ui/carousel"
+import { getCollection } from "astro:content"
+import { isAfter, parse } from "date-fns"
+
+import Welcome from "../components/Welcome.mdx"
 import Layout from "../layouts/Layout.astro"
+
+const edlDates = (await getCollection("edl"))
+  .map(
+    ({ id, data: { content } }): EdlItem => ({
+      date: parse(id, "yyyyLLdd", new Date()),
+      content: content,
+      id,
+    })
+  )
+  .toSorted((a, b) => (isAfter(b.date, a.date) ? 1 : -1))
 ---
 
 <script is:inline>
@@ -24,5 +38,11 @@ import Layout from "../layouts/Layout.astro"
   }
 </script>
 <Layout>
-  <Welcome />
+  <div class="prose prose-h1:text-6xl prose-headings:mb-0 mx-auto">
+    <h1 class="text-center pt-6 pb-0 mb-0">L'Écho des Labos</h1>
+    <EdlCarousel items={edlDates} client:visible />
+    <div class="max-w-10/12 mx-auto pb-10">
+      <Welcome />
+    </div>
+  </div>
 </Layout>

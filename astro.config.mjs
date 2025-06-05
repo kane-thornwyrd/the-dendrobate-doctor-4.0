@@ -1,5 +1,4 @@
 // @ts-check
-import fs from "node:fs"
 import mdx from "@astrojs/mdx"
 import react from "@astrojs/react"
 import sitemap from "@astrojs/sitemap"
@@ -20,7 +19,8 @@ export default defineConfig({
   },
   // site: "https://www.the-dendrobate-doctor.fr",
   site: "https://kane-thornwyrd.github.io",
-  base: "the-dendrobate-doctor-4.0",
+  base: process.env["NODE_ENV"] === "development" ? "" : "the-dendrobate-doctor-4.0",
+  trailingSlash: "never",
   integrations: [
     mdx({
       shikiConfig: {

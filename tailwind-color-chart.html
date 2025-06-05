@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tailwind Color Chart</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      background: #808080; /* optical neutral grey 50 */
+      color: #222;
+    }
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .container {
+      flex: 2 1 0%;
+      padding: 2rem 1rem 2rem 2rem;
+      overflow-y: auto;
+      min-width: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .swatch {
+      border-radius: 8px;
+      box-shadow: 0 1px 4px #0001;
+      cursor: pointer;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: border 0.2s;
+      background: #fff;
+    }
+    .swatch.selected { border: 2px solid #0ea5e9; }
+    .color-box { height: 48px; }
+    .swatch-label { padding: 0.5em; font-size: 0.95em; }
+    .aside-details {
+      flex: 1 0 340px;
+      max-width: 420px;
+      min-width: 320px;
+      background: #f3f4f6; /* neutral-100 */
+      border-left: 1px solid #e5e7eb;
+      padding: 2rem 1.5rem;
+      box-sizing: border-box;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: box-shadow 0.2s;
+      box-shadow: -2px 0 8px #0001;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .aside-details[hidden] { display: none; }
+    .details { padding: 0; margin: 0; background: none; box-shadow: none; border-radius: 0; }
+    .class-preview { display: flex; gap: 1rem; align-items: center; margin: 0.5rem 0; }
+    .preview-box { width: 48px; height: 32px; border-radius: 6px; border: 1px solid #ddd; display: inline-block; margin-right: 0.5em; position:relative; }
+    .related-over { position:absolute;top:4px;left:4px;right:4px;display:flex;gap:6px;justify-content:center;z-index:2; }
+    .related-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px #0002;
+      display: inline-block;
+      cursor: help;
+    }
+    .snippet { background: #f1f5f9; padding: 0.5em 1em; border-radius: 6px; font-family: monospace; display: inline-block; margin-right: 0.5em; }
+    button.copy-btn { margin-left: 0.5em; padding: 0.2em 0.7em; border: none; border-radius: 4px; background: #0ea5e9; color: #fff; cursor: pointer; font-size: 0.95em; }
+    .related { display: flex; gap: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .related .swatch { min-width: 120px; }
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .aside-details {
+        position: static;
+        max-width: 100vw;
+        min-width: 0;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: none;
+        padding: 1.5rem 0.5rem;
+      }
+      .container { padding: 1rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="container">
+      <h1>Tailwind Color Chart</h1>
+      <div class="grid" id="colorGrid"></div>
+    </div>
+    <aside class="aside-details" id="colorDetails" hidden></aside>
+  </div>
+  <script>
+    const colors = {
+  "inherit": "inherit",
+  "current": "currentColor",
+  "transparent": "transparent",
+  "black": "#000",
+  "white": "#fff",
+  "slate": {
+    "50": "oklch(0.984 0.003 247.858)",
+    "100": "oklch(0.968 0.007 247.896)",
+    "200": "oklch(0.929 0.013 255.508)",
+    "300": "oklch(0.869 0.022 252.894)",
+    "400": "oklch(0.704 0.04 256.788)",
+    "500": "oklch(0.554 0.046 257.417)",
+    "600": "oklch(0.446 0.043 257.281)",
+    "700": "oklch(0.372 0.044 257.287)",
+    "800": "oklch(0.279 0.041 260.031)",
+    "900": "oklch(0.208 0.042 265.755)",
+    "950": "oklch(0.129 0.042 264.695)"
+  },
+  "gray": {
+    "50": "oklch(0.985 0.002 247.839)",
+    "100": "oklch(0.967 0.003 264.542)",
+    "200": "oklch(0.928 0.006 264.531)",
+    "300": "oklch(0.872 0.01 258.338)",
+    "400": "oklch(0.707 0.022 261.325)",
+    "500": "oklch(0.551 0.027 264.364)",
+    "600": "oklch(0.446 0.03 256.802)",
+    "700": "oklch(0.373 0.034 259.733)",
+    "800": "oklch(0.278 0.033 256.848)",
+    "900": "oklch(0.21 0.034 264.665)",
+    "950": "oklch(0.13 0.028 261.692)"
+  },
+  "zinc": {
+    "50": "oklch(0.985 0 0)",
+    "100": "oklch(0.967 0.001 286.375)",
+    "200": "oklch(0.92 0.004 286.32)",
+    "300": "oklch(0.871 0.006 286.286)",
+    "400": "oklch(0.705 0.015 286.067)",
+    "500": "oklch(0.552 0.016 285.938)",
+    "600": "oklch(0.442 0.017 285.786)",
+    "700": "oklch(0.37 0.013 285.805)",
+    "800": "oklch(0.274 0.006 286.033)",
+    "900": "oklch(0.21 0.006 285.885)",
+    "950": "oklch(0.141 0.005 285.823)"
+  },
+  "neutral": {
+    "50": "oklch(0.985 0 0)",
+    "100": "oklch(0.97 0 0)",
+    "200": "oklch(0.922 0 0)",
+    "300": "oklch(0.87 0 0)",
+    "400": "oklch(0.708 0 0)",
+    "500": "oklch(0.556 0 0)",
+    "600": "oklch(0.439 0 0)",
+    "700": "oklch(0.371 0 0)",
+    "800": "oklch(0.269 0 0)",
+    "900": "oklch(0.205 0 0)",
+    "950": "oklch(0.145 0 0)"
+  },
+  "stone": {
+    "50": "oklch(0.985 0.001 106.423)",
+    "100": "oklch(0.97 0.001 106.424)",
+    "200": "oklch(0.923 0.003 48.717)",
+    "300": "oklch(0.869 0.005 56.366)",
+    "400": "oklch(0.709 0.01 56.259)",
+    "500": "oklch(0.553 0.013 58.071)",
+    "600": "oklch(0.444 0.011 73.639)",
+    "700": "oklch(0.374 0.01 67.558)",
+    "800": "oklch(0.268 0.007 34.298)",
+    "900": "oklch(0.216 0.006 56.043)",
+    "950": "oklch(0.147 0.004 49.25)"
+  },
+  "red": {
+    "50": "oklch(0.971 0.013 17.38)",
+    "100": "oklch(0.936 0.032 17.717)",
+    "200": "oklch(0.885 0.062 18.334)",
+    "300": "oklch(0.808 0.114 19.571)",
+    "400": "oklch(0.704 0.191 22.216)",
+    "500": "oklch(0.637 0.237 25.331)",
+    "600": "oklch(0.577 0.245 27.325)",
+    "700": "oklch(0.505 0.213 27.518)",
+    "800": "oklch(0.444 0.177 26.899)",
+    "900": "oklch(0.396 0.141 25.723)",
+    "950": "oklch(0.258 0.092 26.042)"
+  },
+  "orange": {
+    "50": "oklch(0.98 0.016 73.684)",
+    "100": "oklch(0.954 0.038 75.164)",
+    "200": "oklch(0.901 0.076 70.697)",
+    "300": "oklch(0.837 0.128 66.29)",
+    "400": "oklch(0.75 0.183 55.934)",
+    "500": "oklch(0.705 0.213 47.604)",
+    "600": "oklch(0.646 0.222 41.116)",
+    "700": "oklch(0.553 0.195 38.402)",
+    "800": "oklch(0.47 0.157 37.304)",
+    "900": "oklch(0.408 0.123 38.172)",
+    "950": "oklch(0.266 0.079 36.259)"
+  },
+  "amber": {
+    "50": "oklch(0.987 0.022 95.277)",
+    "100": "oklch(0.962 0.059 95.617)",
+    "200": "oklch(0.924 0.12 95.746)",
+    "300": "oklch(0.879 0.169 91.605)",
+    "400": "oklch(0.828 0.189 84.429)",
+    "500": "oklch(0.769 0.188 70.08)",
+    "600": "oklch(0.666 0.179 58.318)",
+    "700": "oklch(0.555 0.163 48.998)",
+    "800": "oklch(0.473 0.137 46.201)",
+    "900": "oklch(0.414 0.112 45.904)",
+    "950": "oklch(0.279 0.077 45.635)"
+  },
+  "yellow": {
+    "50": "oklch(0.987 0.026 102.212)",
+    "100": "oklch(0.973 0.071 103.193)",
+    "200": "oklch(0.945 0.129 101.54)",
+    "300": "oklch(0.905 0.182 98.111)",
+    "400": "oklch(0.852 0.199 91.936)",
+    "500": "oklch(0.795 0.184 86.047)",
+    "600": "oklch(0.681 0.162 75.834)",
+    "700": "oklch(0.554 0.135 66.442)",
+    "800": "oklch(0.476 0.114 61.907)",
+    "900": "oklch(0.421 0.095 57.708)",
+    "950": "oklch(0.286 0.066 53.813)"
+  },
+  "lime": {
+    "50": "oklch(0.986 0.031 120.757)",
+    "100": "oklch(0.967 0.067 122.328)",
+    "200": "oklch(0.938 0.127 124.321)",
+    "300": "oklch(0.897 0.196 126.665)",
+    "400": "oklch(0.841 0.238 128.85)",
+    "500": "oklch(0.768 0.233 130.85)",
+    "600": "oklch(0.648 0.2 131.684)",
+    "700": "oklch(0.532 0.157 131.589)",
+    "800": "oklch(0.453 0.124 130.933)",
+    "900": "oklch(0.405 0.101 131.063)",
+    "950": "oklch(0.274 0.072 132.109)"
+  },
+  "green": {
+    "50": "oklch(0.982 0.018 155.826)",
+    "100": "oklch(0.962 0.044 156.743)",
+    "200": "oklch(0.925 0.084 155.995)",
+    "300": "oklch(0.871 0.15 154.449)",
+    "400": "oklch(0.792 0.209 151.711)",
+    "500": "oklch(0.723 0.219 149.579)",
+    "600": "oklch(0.627 0.194 149.214)",
+    "700": "oklch(0.527 0.154 150.069)",
+    "800": "oklch(0.448 0.119 151.328)",
+    "900": "oklch(0.393 0.095 152.535)",
+    "950": "oklch(0.266 0.065 152.934)"
+  },
+  "emerald": {
+    "50": "oklch(0.979 0.021 166.113)",
+    "100": "oklch(0.95 0.052 163.051)",
+    "200": "oklch(0.905 0.093 164.15)",
+    "300": "oklch(0.845 0.143 164.978)",
+    "400": "oklch(0.765 0.177 163.223)",
+    "500": "oklch(0.696 0.17 162.48)",
+    "600": "oklch(0.596 0.145 163.225)",
+    "700": "oklch(0.508 0.118 165.612)",
+    "800": "oklch(0.432 0.095 166.913)",
+    "900": "oklch(0.378 0.077 168.94)",
+    "950": "oklch(0.262 0.051 172.552)"
+  },
+  "teal": {
+    "50": "oklch(0.984 0.014 180.72)",
+    "100": "oklch(0.953 0.051 180.801)",
+    "200": "oklch(0.91 0.096 180.426)",
+    "300": "oklch(0.855 0.138 181.071)",
+    "400": "oklch(0.777 0.152 181.912)",
+    "500": "oklch(0.704 0.14 182.503)",
+    "600": "oklch(0.6 0.118 184.704)",
+    "700": "oklch(0.511 0.096 186.391)",
+    "800": "oklch(0.437 0.078 188.216)",
+    "900": "oklch(0.386 0.063 188.416)",
+    "950": "oklch(0.277 0.046 192.524)"
+  },
+  "cyan": {
+    "50": "oklch(0.984 0.019 200.873)",
+    "100": "oklch(0.956 0.045 203.388)",
+    "200": "oklch(0.917 0.08 205.041)",
+    "300": "oklch(0.865 0.127 207.078)",
+    "400": "oklch(0.789 0.154 211.53)",
+    "500": "oklch(0.715 0.143 215.221)",
+    "600": "oklch(0.609 0.126 221.723)",
+    "700": "oklch(0.52 0.105 223.128)",
+    "800": "oklch(0.45 0.085 224.283)",
+    "900": "oklch(0.398 0.07 227.392)",
+    "950": "oklch(0.302 0.056 229.695)"
+  },
+  "sky": {
+    "50": "oklch(0.977 0.013 236.62)",
+    "100": "oklch(0.951 0.026 236.824)",
+    "200": "oklch(0.901 0.058 230.902)",
+    "300": "oklch(0.828 0.111 230.318)",
+    "400": "oklch(0.746 0.16 232.661)",
+    "500": "oklch(0.685 0.169 237.323)",
+    "600": "oklch(0.588 0.158 241.966)",
+    "700": "oklch(0.5 0.134 242.749)",
+    "800": "oklch(0.443 0.11 240.79)",
+    "900": "oklch(0.391 0.09 240.876)",
+    "950": "oklch(0.293 0.066 243.157)"
+  },
+  "blue": {
+    "50": "oklch(0.97 0.014 254.604)",
+    "100": "oklch(0.932 0.032 255.585)",
+    "200": "oklch(0.882 0.059 254.128)",
+    "300": "oklch(0.809 0.105 251.813)",
+    "400": "oklch(0.707 0.165 254.624)",
+    "500": "oklch(0.623 0.214 259.815)",
+    "600": "oklch(0.546 0.245 262.881)",
+    "700": "oklch(0.488 0.243 264.376)",
+    "800": "oklch(0.424 0.199 265.638)",
+    "900": "oklch(0.379 0.146 265.522)",
+    "950": "oklch(0.282 0.091 267.935)"
+  },
+  "indigo": {
+    "50": "oklch(0.962 0.018 272.314)",
+    "100": "oklch(0.93 0.034 272.788)",
+    "200": "oklch(0.87 0.065 274.039)",
+    "300": "oklch(0.785 0.115 274.713)",
+    "400": "oklch(0.673 0.182 276.935)",
+    "500": "oklch(0.585 0.233 277.117)",
+    "600": "oklch(0.511 0.262 276.966)",
+    "700": "oklch(0.457 0.24 277.023)",
+    "800": "oklch(0.398 0.195 277.366)",
+    "900": "oklch(0.359 0.144 278.697)",
+    "950": "oklch(0.257 0.09 281.288)"
+  },
+  "violet": {
+    "50": "oklch(0.969 0.016 293.756)",
+    "100": "oklch(0.943 0.029 294.588)",
+    "200": "oklch(0.894 0.057 293.283)",
+    "300": "oklch(0.811 0.111 293.571)",
+    "400": "oklch(0.702 0.183 293.541)",
+    "500": "oklch(0.606 0.25 292.717)",
+    "600": "oklch(0.541 0.281 293.009)",
+    "700": "oklch(0.491 0.27 292.581)",
+    "800": "oklch(0.432 0.232 292.759)",
+    "900": "oklch(0.38 0.189 293.745)",
+    "950": "oklch(0.283 0.141 291.089)"
+  },
+  "purple": {
+    "50": "oklch(0.977 0.014 308.299)",
+    "100": "oklch(0.946 0.033 307.174)",
+    "200": "oklch(0.902 0.063 306.703)",
+    "300": "oklch(0.827 0.119 306.383)",
+    "400": "oklch(0.714 0.203 305.504)",
+    "500": "oklch(0.627 0.265 303.9)",
+    "600": "oklch(0.558 0.288 302.321)",
+    "700": "oklch(0.496 0.265 301.924)",
+    "800": "oklch(0.438 0.218 303.724)",
+    "900": "oklch(0.381 0.176 304.987)",
+    "950": "oklch(0.291 0.149 302.717)"
+  },
+  "fuchsia": {
+    "50": "oklch(0.977 0.017 320.058)",
+    "100": "oklch(0.952 0.037 318.852)",
+    "200": "oklch(0.903 0.076 319.62)",
+    "300": "oklch(0.833 0.145 321.434)",
+    "400": "oklch(0.74 0.238 322.16)",
+    "500": "oklch(0.667 0.295 322.15)",
+    "600": "oklch(0.591 0.293 322.896)",
+    "700": "oklch(0.518 0.253 323.949)",
+    "800": "oklch(0.452 0.211 324.591)",
+    "900": "oklch(0.401 0.17 325.612)",
+    "950": "oklch(0.293 0.136 325.661)"
+  },
+  "pink": {
+    "50": "oklch(0.971 0.014 343.198)",
+    "100": "oklch(0.948 0.028 342.258)",
+    "200": "oklch(0.899 0.061 343.231)",
+    "300": "oklch(0.823 0.12 346.018)",
+    "400": "oklch(0.718 0.202 349.761)",
+    "500": "oklch(0.656 0.241 354.308)",
+    "600": "oklch(0.592 0.249 0.584)",
+    "700": "oklch(0.525 0.223 3.958)",
+    "800": "oklch(0.459 0.187 3.815)",
+    "900": "oklch(0.408 0.153 2.432)",
+    "950": "oklch(0.284 0.109 3.907)"
+  },
+  "rose": {
+    "50": "oklch(0.969 0.015 12.422)",
+    "100": "oklch(0.941 0.03 12.58)",
+    "200": "oklch(0.892 0.058 10.001)",
+    "300": "oklch(0.81 0.117 11.638)",
+    "400": "oklch(0.712 0.194 13.428)",
+    "500": "oklch(0.645 0.246 16.439)",
+    "600": "oklch(0.586 0.253 17.585)",
+    "700": "oklch(0.514 0.222 16.935)",
+    "800": "oklch(0.455 0.188 13.697)",
+    "900": "oklch(0.41 0.159 10.272)",
+    "950": "oklch(0.271 0.105 12.094)"
+  }
+};
+    const flatColors = [{"name":"inherit","value":"inherit","keys":["inherit"]},{"name":"current","value":"currentColor","keys":["current"]},{"name":"transparent","value":"transparent","keys":["transparent"]},{"name":"black","value":"#000","keys":["black"]},{"name":"white","value":"#fff","keys":["white"]},{"name":"slate.50","value":"oklch(0.984 0.003 247.858)","keys":["slate","50"]},{"name":"slate.100","value":"oklch(0.968 0.007 247.896)","keys":["slate","100"]},{"name":"slate.200","value":"oklch(0.929 0.013 255.508)","keys":["slate","200"]},{"name":"slate.300","value":"oklch(0.869 0.022 252.894)","keys":["slate","300"]},{"name":"slate.400","value":"oklch(0.704 0.04 256.788)","keys":["slate","400"]},{"name":"slate.500","value":"oklch(0.554 0.046 257.417)","keys":["slate","500"]},{"name":"slate.600","value":"oklch(0.446 0.043 257.281)","keys":["slate","600"]},{"name":"slate.700","value":"oklch(0.372 0.044 257.287)","keys":["slate","700"]},{"name":"slate.800","value":"oklch(0.279 0.041 260.031)","keys":["slate","800"]},{"name":"slate.900","value":"oklch(0.208 0.042 265.755)","keys":["slate","900"]},{"name":"slate.950","value":"oklch(0.129 0.042 264.695)","keys":["slate","950"]},{"name":"gray.50","value":"oklch(0.985 0.002 247.839)","keys":["gray","50"]},{"name":"gray.100","value":"oklch(0.967 0.003 264.542)","keys":["gray","100"]},{"name":"gray.200","value":"oklch(0.928 0.006 264.531)","keys":["gray","200"]},{"name":"gray.300","value":"oklch(0.872 0.01 258.338)","keys":["gray","300"]},{"name":"gray.400","value":"oklch(0.707 0.022 261.325)","keys":["gray","400"]},{"name":"gray.500","value":"oklch(0.551 0.027 264.364)","keys":["gray","500"]},{"name":"gray.600","value":"oklch(0.446 0.03 256.802)","keys":["gray","600"]},{"name":"gray.700","value":"oklch(0.373 0.034 259.733)","keys":["gray","700"]},{"name":"gray.800","value":"oklch(0.278 0.033 256.848)","keys":["gray","800"]},{"name":"gray.900","value":"oklch(0.21 0.034 264.665)","keys":["gray","900"]},{"name":"gray.950","value":"oklch(0.13 0.028 261.692)","keys":["gray","950"]},{"name":"zinc.50","value":"oklch(0.985 0 0)","keys":["zinc","50"]},{"name":"zinc.100","value":"oklch(0.967 0.001 286.375)","keys":["zinc","100"]},{"name":"zinc.200","value":"oklch(0.92 0.004 286.32)","keys":["zinc","200"]},{"name":"zinc.300","value":"oklch(0.871 0.006 286.286)","keys":["zinc","300"]},{"name":"zinc.400","value":"oklch(0.705 0.015 286.067)","keys":["zinc","400"]},{"name":"zinc.500","value":"oklch(0.552 0.016 285.938)","keys":["zinc","500"]},{"name":"zinc.600","value":"oklch(0.442 0.017 285.786)","keys":["zinc","600"]},{"name":"zinc.700","value":"oklch(0.37 0.013 285.805)","keys":["zinc","700"]},{"name":"zinc.800","value":"oklch(0.274 0.006 286.033)","keys":["zinc","800"]},{"name":"zinc.900","value":"oklch(0.21 0.006 285.885)","keys":["zinc","900"]},{"name":"zinc.950","value":"oklch(0.141 0.005 285.823)","keys":["zinc","950"]},{"name":"neutral.50","value":"oklch(0.985 0 0)","keys":["neutral","50"]},{"name":"neutral.100","value":"oklch(0.97 0 0)","keys":["neutral","100"]},{"name":"neutral.200","value":"oklch(0.922 0 0)","keys":["neutral","200"]},{"name":"neutral.300","value":"oklch(0.87 0 0)","keys":["neutral","300"]},{"name":"neutral.400","value":"oklch(0.708 0 0)","keys":["neutral","400"]},{"name":"neutral.500","value":"oklch(0.556 0 0)","keys":["neutral","500"]},{"name":"neutral.600","value":"oklch(0.439 0 0)","keys":["neutral","600"]},{"name":"neutral.700","value":"oklch(0.371 0 0)","keys":["neutral","700"]},{"name":"neutral.800","value":"oklch(0.269 0 0)","keys":["neutral","800"]},{"name":"neutral.900","value":"oklch(0.205 0 0)","keys":["neutral","900"]},{"name":"neutral.950","value":"oklch(0.145 0 0)","keys":["neutral","950"]},{"name":"stone.50","value":"oklch(0.985 0.001 106.423)","keys":["stone","50"]},{"name":"stone.100","value":"oklch(0.97 0.001 106.424)","keys":["stone","100"]},{"name":"stone.200","value":"oklch(0.923 0.003 48.717)","keys":["stone","200"]},{"name":"stone.300","value":"oklch(0.869 0.005 56.366)","keys":["stone","300"]},{"name":"stone.400","value":"oklch(0.709 0.01 56.259)","keys":["stone","400"]},{"name":"stone.500","value":"oklch(0.553 0.013 58.071)","keys":["stone","500"]},{"name":"stone.600","value":"oklch(0.444 0.011 73.639)","keys":["stone","600"]},{"name":"stone.700","value":"oklch(0.374 0.01 67.558)","keys":["stone","700"]},{"name":"stone.800","value":"oklch(0.268 0.007 34.298)","keys":["stone","800"]},{"name":"stone.900","value":"oklch(0.216 0.006 56.043)","keys":["stone","900"]},{"name":"stone.950","value":"oklch(0.147 0.004 49.25)","keys":["stone","950"]},{"name":"red.50","value":"oklch(0.971 0.013 17.38)","keys":["red","50"]},{"name":"red.100","value":"oklch(0.936 0.032 17.717)","keys":["red","100"]},{"name":"red.200","value":"oklch(0.885 0.062 18.334)","keys":["red","200"]},{"name":"red.300","value":"oklch(0.808 0.114 19.571)","keys":["red","300"]},{"name":"red.400","value":"oklch(0.704 0.191 22.216)","keys":["red","400"]},{"name":"red.500","value":"oklch(0.637 0.237 25.331)","keys":["red","500"]},{"name":"red.600","value":"oklch(0.577 0.245 27.325)","keys":["red","600"]},{"name":"red.700","value":"oklch(0.505 0.213 27.518)","keys":["red","700"]},{"name":"red.800","value":"oklch(0.444 0.177 26.899)","keys":["red","800"]},{"name":"red.900","value":"oklch(0.396 0.141 25.723)","keys":["red","900"]},{"name":"red.950","value":"oklch(0.258 0.092 26.042)","keys":["red","950"]},{"name":"orange.50","value":"oklch(0.98 0.016 73.684)","keys":["orange","50"]},{"name":"orange.100","value":"oklch(0.954 0.038 75.164)","keys":["orange","100"]},{"name":"orange.200","value":"oklch(0.901 0.076 70.697)","keys":["orange","200"]},{"name":"orange.300","value":"oklch(0.837 0.128 66.29)","keys":["orange","300"]},{"name":"orange.400","value":"oklch(0.75 0.183 55.934)","keys":["orange","400"]},{"name":"orange.500","value":"oklch(0.705 0.213 47.604)","keys":["orange","500"]},{"name":"orange.600","value":"oklch(0.646 0.222 41.116)","keys":["orange","600"]},{"name":"orange.700","value":"oklch(0.553 0.195 38.402)","keys":["orange","700"]},{"name":"orange.800","value":"oklch(0.47 0.157 37.304)","keys":["orange","800"]},{"name":"orange.900","value":"oklch(0.408 0.123 38.172)","keys":["orange","900"]},{"name":"orange.950","value":"oklch(0.266 0.079 36.259)","keys":["orange","950"]},{"name":"amber.50","value":"oklch(0.987 0.022 95.277)","keys":["amber","50"]},{"name":"amber.100","value":"oklch(0.962 0.059 95.617)","keys":["amber","100"]},{"name":"amber.200","value":"oklch(0.924 0.12 95.746)","keys":["amber","200"]},{"name":"amber.300","value":"oklch(0.879 0.169 91.605)","keys":["amber","300"]},{"name":"amber.400","value":"oklch(0.828 0.189 84.429)","keys":["amber","400"]},{"name":"amber.500","value":"oklch(0.769 0.188 70.08)","keys":["amber","500"]},{"name":"amber.600","value":"oklch(0.666 0.179 58.318)","keys":["amber","600"]},{"name":"amber.700","value":"oklch(0.555 0.163 48.998)","keys":["amber","700"]},{"name":"amber.800","value":"oklch(0.473 0.137 46.201)","keys":["amber","800"]},{"name":"amber.900","value":"oklch(0.414 0.112 45.904)","keys":["amber","900"]},{"name":"amber.950","value":"oklch(0.279 0.077 45.635)","keys":["amber","950"]},{"name":"yellow.50","value":"oklch(0.987 0.026 102.212)","keys":["yellow","50"]},{"name":"yellow.100","value":"oklch(0.973 0.071 103.193)","keys":["yellow","100"]},{"name":"yellow.200","value":"oklch(0.945 0.129 101.54)","keys":["yellow","200"]},{"name":"yellow.300","value":"oklch(0.905 0.182 98.111)","keys":["yellow","300"]},{"name":"yellow.400","value":"oklch(0.852 0.199 91.936)","keys":["yellow","400"]},{"name":"yellow.500","value":"oklch(0.795 0.184 86.047)","keys":["yellow","500"]},{"name":"yellow.600","value":"oklch(0.681 0.162 75.834)","keys":["yellow","600"]},{"name":"yellow.700","value":"oklch(0.554 0.135 66.442)","keys":["yellow","700"]},{"name":"yellow.800","value":"oklch(0.476 0.114 61.907)","keys":["yellow","800"]},{"name":"yellow.900","value":"oklch(0.421 0.095 57.708)","keys":["yellow","900"]},{"name":"yellow.950","value":"oklch(0.286 0.066 53.813)","keys":["yellow","950"]},{"name":"lime.50","value":"oklch(0.986 0.031 120.757)","keys":["lime","50"]},{"name":"lime.100","value":"oklch(0.967 0.067 122.328)","keys":["lime","100"]},{"name":"lime.200","value":"oklch(0.938 0.127 124.321)","keys":["lime","200"]},{"name":"lime.300","value":"oklch(0.897 0.196 126.665)","keys":["lime","300"]},{"name":"lime.400","value":"oklch(0.841 0.238 128.85)","keys":["lime","400"]},{"name":"lime.500","value":"oklch(0.768 0.233 130.85)","keys":["lime","500"]},{"name":"lime.600","value":"oklch(0.648 0.2 131.684)","keys":["lime","600"]},{"name":"lime.700","value":"oklch(0.532 0.157 131.589)","keys":["lime","700"]},{"name":"lime.800","value":"oklch(0.453 0.124 130.933)","keys":["lime","800"]},{"name":"lime.900","value":"oklch(0.405 0.101 131.063)","keys":["lime","900"]},{"name":"lime.950","value":"oklch(0.274 0.072 132.109)","keys":["lime","950"]},{"name":"green.50","value":"oklch(0.982 0.018 155.826)","keys":["green","50"]},{"name":"green.100","value":"oklch(0.962 0.044 156.743)","keys":["green","100"]},{"name":"green.200","value":"oklch(0.925 0.084 155.995)","keys":["green","200"]},{"name":"green.300","value":"oklch(0.871 0.15 154.449)","keys":["green","300"]},{"name":"green.400","value":"oklch(0.792 0.209 151.711)","keys":["green","400"]},{"name":"green.500","value":"oklch(0.723 0.219 149.579)","keys":["green","500"]},{"name":"green.600","value":"oklch(0.627 0.194 149.214)","keys":["green","600"]},{"name":"green.700","value":"oklch(0.527 0.154 150.069)","keys":["green","700"]},{"name":"green.800","value":"oklch(0.448 0.119 151.328)","keys":["green","800"]},{"name":"green.900","value":"oklch(0.393 0.095 152.535)","keys":["green","900"]},{"name":"green.950","value":"oklch(0.266 0.065 152.934)","keys":["green","950"]},{"name":"emerald.50","value":"oklch(0.979 0.021 166.113)","keys":["emerald","50"]},{"name":"emerald.100","value":"oklch(0.95 0.052 163.051)","keys":["emerald","100"]},{"name":"emerald.200","value":"oklch(0.905 0.093 164.15)","keys":["emerald","200"]},{"name":"emerald.300","value":"oklch(0.845 0.143 164.978)","keys":["emerald","300"]},{"name":"emerald.400","value":"oklch(0.765 0.177 163.223)","keys":["emerald","400"]},{"name":"emerald.500","value":"oklch(0.696 0.17 162.48)","keys":["emerald","500"]},{"name":"emerald.600","value":"oklch(0.596 0.145 163.225)","keys":["emerald","600"]},{"name":"emerald.700","value":"oklch(0.508 0.118 165.612)","keys":["emerald","700"]},{"name":"emerald.800","value":"oklch(0.432 0.095 166.913)","keys":["emerald","800"]},{"name":"emerald.900","value":"oklch(0.378 0.077 168.94)","keys":["emerald","900"]},{"name":"emerald.950","value":"oklch(0.262 0.051 172.552)","keys":["emerald","950"]},{"name":"teal.50","value":"oklch(0.984 0.014 180.72)","keys":["teal","50"]},{"name":"teal.100","value":"oklch(0.953 0.051 180.801)","keys":["teal","100"]},{"name":"teal.200","value":"oklch(0.91 0.096 180.426)","keys":["teal","200"]},{"name":"teal.300","value":"oklch(0.855 0.138 181.071)","keys":["teal","300"]},{"name":"teal.400","value":"oklch(0.777 0.152 181.912)","keys":["teal","400"]},{"name":"teal.500","value":"oklch(0.704 0.14 182.503)","keys":["teal","500"]},{"name":"teal.600","value":"oklch(0.6 0.118 184.704)","keys":["teal","600"]},{"name":"teal.700","value":"oklch(0.511 0.096 186.391)","keys":["teal","700"]},{"name":"teal.800","value":"oklch(0.437 0.078 188.216)","keys":["teal","800"]},{"name":"teal.900","value":"oklch(0.386 0.063 188.416)","keys":["teal","900"]},{"name":"teal.950","value":"oklch(0.277 0.046 192.524)","keys":["teal","950"]},{"name":"cyan.50","value":"oklch(0.984 0.019 200.873)","keys":["cyan","50"]},{"name":"cyan.100","value":"oklch(0.956 0.045 203.388)","keys":["cyan","100"]},{"name":"cyan.200","value":"oklch(0.917 0.08 205.041)","keys":["cyan","200"]},{"name":"cyan.300","value":"oklch(0.865 0.127 207.078)","keys":["cyan","300"]},{"name":"cyan.400","value":"oklch(0.789 0.154 211.53)","keys":["cyan","400"]},{"name":"cyan.500","value":"oklch(0.715 0.143 215.221)","keys":["cyan","500"]},{"name":"cyan.600","value":"oklch(0.609 0.126 221.723)","keys":["cyan","600"]},{"name":"cyan.700","value":"oklch(0.52 0.105 223.128)","keys":["cyan","700"]},{"name":"cyan.800","value":"oklch(0.45 0.085 224.283)","keys":["cyan","800"]},{"name":"cyan.900","value":"oklch(0.398 0.07 227.392)","keys":["cyan","900"]},{"name":"cyan.950","value":"oklch(0.302 0.056 229.695)","keys":["cyan","950"]},{"name":"sky.50","value":"oklch(0.977 0.013 236.62)","keys":["sky","50"]},{"name":"sky.100","value":"oklch(0.951 0.026 236.824)","keys":["sky","100"]},{"name":"sky.200","value":"oklch(0.901 0.058 230.902)","keys":["sky","200"]},{"name":"sky.300","value":"oklch(0.828 0.111 230.318)","keys":["sky","300"]},{"name":"sky.400","value":"oklch(0.746 0.16 232.661)","keys":["sky","400"]},{"name":"sky.500","value":"oklch(0.685 0.169 237.323)","keys":["sky","500"]},{"name":"sky.600","value":"oklch(0.588 0.158 241.966)","keys":["sky","600"]},{"name":"sky.700","value":"oklch(0.5 0.134 242.749)","keys":["sky","700"]},{"name":"sky.800","value":"oklch(0.443 0.11 240.79)","keys":["sky","800"]},{"name":"sky.900","value":"oklch(0.391 0.09 240.876)","keys":["sky","900"]},{"name":"sky.950","value":"oklch(0.293 0.066 243.157)","keys":["sky","950"]},{"name":"blue.50","value":"oklch(0.97 0.014 254.604)","keys":["blue","50"]},{"name":"blue.100","value":"oklch(0.932 0.032 255.585)","keys":["blue","100"]},{"name":"blue.200","value":"oklch(0.882 0.059 254.128)","keys":["blue","200"]},{"name":"blue.300","value":"oklch(0.809 0.105 251.813)","keys":["blue","300"]},{"name":"blue.400","value":"oklch(0.707 0.165 254.624)","keys":["blue","400"]},{"name":"blue.500","value":"oklch(0.623 0.214 259.815)","keys":["blue","500"]},{"name":"blue.600","value":"oklch(0.546 0.245 262.881)","keys":["blue","600"]},{"name":"blue.700","value":"oklch(0.488 0.243 264.376)","keys":["blue","700"]},{"name":"blue.800","value":"oklch(0.424 0.199 265.638)","keys":["blue","800"]},{"name":"blue.900","value":"oklch(0.379 0.146 265.522)","keys":["blue","900"]},{"name":"blue.950","value":"oklch(0.282 0.091 267.935)","keys":["blue","950"]},{"name":"indigo.50","value":"oklch(0.962 0.018 272.314)","keys":["indigo","50"]},{"name":"indigo.100","value":"oklch(0.93 0.034 272.788)","keys":["indigo","100"]},{"name":"indigo.200","value":"oklch(0.87 0.065 274.039)","keys":["indigo","200"]},{"name":"indigo.300","value":"oklch(0.785 0.115 274.713)","keys":["indigo","300"]},{"name":"indigo.400","value":"oklch(0.673 0.182 276.935)","keys":["indigo","400"]},{"name":"indigo.500","value":"oklch(0.585 0.233 277.117)","keys":["indigo","500"]},{"name":"indigo.600","value":"oklch(0.511 0.262 276.966)","keys":["indigo","600"]},{"name":"indigo.700","value":"oklch(0.457 0.24 277.023)","keys":["indigo","700"]},{"name":"indigo.800","value":"oklch(0.398 0.195 277.366)","keys":["indigo","800"]},{"name":"indigo.900","value":"oklch(0.359 0.144 278.697)","keys":["indigo","900"]},{"name":"indigo.950","value":"oklch(0.257 0.09 281.288)","keys":["indigo","950"]},{"name":"violet.50","value":"oklch(0.969 0.016 293.756)","keys":["violet","50"]},{"name":"violet.100","value":"oklch(0.943 0.029 294.588)","keys":["violet","100"]},{"name":"violet.200","value":"oklch(0.894 0.057 293.283)","keys":["violet","200"]},{"name":"violet.300","value":"oklch(0.811 0.111 293.571)","keys":["violet","300"]},{"name":"violet.400","value":"oklch(0.702 0.183 293.541)","keys":["violet","400"]},{"name":"violet.500","value":"oklch(0.606 0.25 292.717)","keys":["violet","500"]},{"name":"violet.600","value":"oklch(0.541 0.281 293.009)","keys":["violet","600"]},{"name":"violet.700","value":"oklch(0.491 0.27 292.581)","keys":["violet","700"]},{"name":"violet.800","value":"oklch(0.432 0.232 292.759)","keys":["violet","800"]},{"name":"violet.900","value":"oklch(0.38 0.189 293.745)","keys":["violet","900"]},{"name":"violet.950","value":"oklch(0.283 0.141 291.089)","keys":["violet","950"]},{"name":"purple.50","value":"oklch(0.977 0.014 308.299)","keys":["purple","50"]},{"name":"purple.100","value":"oklch(0.946 0.033 307.174)","keys":["purple","100"]},{"name":"purple.200","value":"oklch(0.902 0.063 306.703)","keys":["purple","200"]},{"name":"purple.300","value":"oklch(0.827 0.119 306.383)","keys":["purple","300"]},{"name":"purple.400","value":"oklch(0.714 0.203 305.504)","keys":["purple","400"]},{"name":"purple.500","value":"oklch(0.627 0.265 303.9)","keys":["purple","500"]},{"name":"purple.600","value":"oklch(0.558 0.288 302.321)","keys":["purple","600"]},{"name":"purple.700","value":"oklch(0.496 0.265 301.924)","keys":["purple","700"]},{"name":"purple.800","value":"oklch(0.438 0.218 303.724)","keys":["purple","800"]},{"name":"purple.900","value":"oklch(0.381 0.176 304.987)","keys":["purple","900"]},{"name":"purple.950","value":"oklch(0.291 0.149 302.717)","keys":["purple","950"]},{"name":"fuchsia.50","value":"oklch(0.977 0.017 320.058)","keys":["fuchsia","50"]},{"name":"fuchsia.100","value":"oklch(0.952 0.037 318.852)","keys":["fuchsia","100"]},{"name":"fuchsia.200","value":"oklch(0.903 0.076 319.62)","keys":["fuchsia","200"]},{"name":"fuchsia.300","value":"oklch(0.833 0.145 321.434)","keys":["fuchsia","300"]},{"name":"fuchsia.400","value":"oklch(0.74 0.238 322.16)","keys":["fuchsia","400"]},{"name":"fuchsia.500","value":"oklch(0.667 0.295 322.15)","keys":["fuchsia","500"]},{"name":"fuchsia.600","value":"oklch(0.591 0.293 322.896)","keys":["fuchsia","600"]},{"name":"fuchsia.700","value":"oklch(0.518 0.253 323.949)","keys":["fuchsia","700"]},{"name":"fuchsia.800","value":"oklch(0.452 0.211 324.591)","keys":["fuchsia","800"]},{"name":"fuchsia.900","value":"oklch(0.401 0.17 325.612)","keys":["fuchsia","900"]},{"name":"fuchsia.950","value":"oklch(0.293 0.136 325.661)","keys":["fuchsia","950"]},{"name":"pink.50","value":"oklch(0.971 0.014 343.198)","keys":["pink","50"]},{"name":"pink.100","value":"oklch(0.948 0.028 342.258)","keys":["pink","100"]},{"name":"pink.200","value":"oklch(0.899 0.061 343.231)","keys":["pink","200"]},{"name":"pink.300","value":"oklch(0.823 0.12 346.018)","keys":["pink","300"]},{"name":"pink.400","value":"oklch(0.718 0.202 349.761)","keys":["pink","400"]},{"name":"pink.500","value":"oklch(0.656 0.241 354.308)","keys":["pink","500"]},{"name":"pink.600","value":"oklch(0.592 0.249 0.584)","keys":["pink","600"]},{"name":"pink.700","value":"oklch(0.525 0.223 3.958)","keys":["pink","700"]},{"name":"pink.800","value":"oklch(0.459 0.187 3.815)","keys":["pink","800"]},{"name":"pink.900","value":"oklch(0.408 0.153 2.432)","keys":["pink","900"]},{"name":"pink.950","value":"oklch(0.284 0.109 3.907)","keys":["pink","950"]},{"name":"rose.50","value":"oklch(0.969 0.015 12.422)","keys":["rose","50"]},{"name":"rose.100","value":"oklch(0.941 0.03 12.58)","keys":["rose","100"]},{"name":"rose.200","value":"oklch(0.892 0.058 10.001)","keys":["rose","200"]},{"name":"rose.300","value":"oklch(0.81 0.117 11.638)","keys":["rose","300"]},{"name":"rose.400","value":"oklch(0.712 0.194 13.428)","keys":["rose","400"]},{"name":"rose.500","value":"oklch(0.645 0.246 16.439)","keys":["rose","500"]},{"name":"rose.600","value":"oklch(0.586 0.253 17.585)","keys":["rose","600"]},{"name":"rose.700","value":"oklch(0.514 0.222 16.935)","keys":["rose","700"]},{"name":"rose.800","value":"oklch(0.455 0.188 13.697)","keys":["rose","800"]},{"name":"rose.900","value":"oklch(0.41 0.159 10.272)","keys":["rose","900"]},{"name":"rose.950","value":"oklch(0.271 0.105 12.094)","keys":["rose","950"]}];
+
+    function getTailwindClasses(name) {
+      const parts = name.split(".");
+      if (parts.length === 2) {
+        return [
+          { class: "bg-" + parts.join("-"), type: "Background" },
+          { class: "text-" + parts.join("-"), type: "Text" }
+        ];
+      }
+      return [];
+    }
+
+    function getColorValue(keys) {
+      return keys.reduce((obj, k) => obj && obj[k], colors);
+    }
+
+    // Convert a CSS color string to RGB array
+    function cssToRgb(str) {
+      // For hex
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(str)) {
+        let hex = str.replace("#", "");
+        if (hex.length === 3) hex = hex.split("").map(x => x + x).join("");
+        const num = parseInt(hex, 16);
+        return [ (num >> 16) & 255, (num >> 8) & 255, num & 255 ];
+      }
+      // For oklch, use browser to parse
+      if (str.startsWith("oklch(")) {
+        const d = document.createElement("div");
+        d.style.color = str;
+        document.body.appendChild(d);
+        const rgb = getComputedStyle(d).color.match(/\d+/g).map(Number);
+        document.body.removeChild(d);
+        return rgb.length === 3 ? rgb : [200,200,200];
+      }
+      // For rgb/rgba
+      const rgbMatch = str.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (rgbMatch) return [parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), parseInt(rgbMatch[3])];
+      return [200,200,200];
+    }
+
+    // Euclidean distance in RGB
+    function colorDist(a, b) {
+      return Math.sqrt(
+        Math.pow(a[0]-b[0],2) +
+        Math.pow(a[1]-b[1],2) +
+        Math.pow(a[2]-b[2],2)
+      );
+    }
+
+    // Find closest Tailwind color value in flatColors
+    function findClosestTailwindColor(target) {
+      const targetRgb = cssToRgb(target);
+      let minDist = Infinity, closest = null, closestName = "";
+      flatColors.forEach(c => {
+        const rgb = cssToRgb(c.value);
+        const dist = colorDist(targetRgb, rgb);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = c.value;
+          closestName = c.name;
+        }
+      });
+      return { value: closest, name: closestName };
+    }
+
+    function parseToRgb(val) {
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
+        let hex = val.replace("#", "");
+        if (hex.length === 3) hex = hex.split("").map(x => x + x).join("");
+        const num = parseInt(hex, 16);
+        return [ (num >> 16) & 255, (num >> 8) & 255, num & 255 ];
+      }
+      return [200, 200, 200];
+    }
+
+    function getRelatedColors(val) {
+      let related = [];
+      // HEX
+      if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(val)) {
+        const [r, g, b] = parseToRgb(val);
+        const comp = "#" + [255-r, 255-g, 255-b].map(x => x.toString(16).padStart(2,"0")).join("");
+        const triad1 = "#" + [g, b, r].map(x => x.toString(16).padStart(2,"0")).join("");
+        const triad2 = "#" + [b, r, g].map(x => x.toString(16).padStart(2,"0")).join("");
+        const ana1 = "#" + [Math.max(0, r-30), g, b].map(x => x.toString(16).padStart(2,"0")).join("");
+        const ana2 = "#" + [r, Math.max(0, g-30), b].map(x => x.toString(16).padStart(2,"0")).join("");
+        related = [
+          { label: "Complementary", value: comp },
+          { label: "Triadic 1", value: triad1 },
+          { label: "Triadic 2", value: triad2 },
+          { label: "Analogous 1", value: ana1 },
+          { label: "Analogous 2", value: ana2 }
+        ];
+      }
+      // OKLCH
+      const oklchMatch = val.match(/^oklch\(\s*([0-9\.]+)\s+([0-9\.]+)\s+([0-9\.]+)\s*\)$/i);
+      if (oklchMatch) {
+        const l = oklchMatch[1];
+        const c = oklchMatch[2];
+        const h = parseFloat(oklchMatch[3]);
+        const mod = d => (((h + d) % 360) + 360) % 360;
+        related = [
+          { label: "Complementary", value: `oklch(${l} ${c} ${mod(180)})` },
+          { label: "Triadic 1", value: `oklch(${l} ${c} ${mod(120)})` },
+          { label: "Triadic 2", value: `oklch(${l} ${c} ${mod(240)})` },
+          { label: "Analogous 1", value: `oklch(${l} ${c} ${mod(30)})` },
+          { label: "Analogous 2", value: `oklch(${l} ${c} ${mod(-30)})` }
+        ];
+      }
+      // Attach closest Tailwind color
+      return related.map(r => {
+        const closest = findClosestTailwindColor(r.value);
+
+        console.log("Finding closest for:", r.value, "found:", closest);
+        return { ...r, twValue: closest.value, twName: closest.name };
+      });
+    }
+
+    function getSnippet(keys) {
+      return 'colors' + keys.map(k => '["' + k + '"]').join("");
+    }
+
+    const grid = document.getElementById("colorGrid");
+    flatColors.forEach(({ name, value }, idx) => {
+      const swatch = document.createElement("div");
+      swatch.className = "swatch";
+      swatch.tabIndex = 0;
+      swatch.innerHTML = `
+        <div class="color-box" style="background:${value};"></div>
+        <div class="swatch-label">
+          <div style="font-weight:500">${name}</div>
+          <div style="font-size:0.92em">${value}</div>
+        </div>
+      `;
+      swatch.onclick = () => showDetails(idx);
+      grid.appendChild(swatch);
+    });
+
+    let selectedIdx = null;
+    function showDetails(idx) {
+      selectedIdx = idx;
+      document.querySelectorAll(".swatch").forEach((el, i) =>
+        el.classList.toggle("selected", i === idx)
+      );
+      const { name, value, keys } = flatColors[idx];
+      const classes = getTailwindClasses(name);
+      const related = getRelatedColors(value);
+      const snippet = getSnippet(keys);
+      console.log("Showing details for:", name, "value:", value, "keys:", keys, "snippet:", snippet);
+
+      let html = `
+        <h2 style="margin-top:0">${name}</h2>
+        <div style="margin-bottom:1.5em;">
+          <div style="position:relative;width:100%;max-width:320px;height:80px;margin:0 auto 0.5em auto;">
+            <div style="background:${value};border-radius:12px;height:100%;width:100%;box-shadow:0 2px 8px #0002;border:1px solid #ddd;"></div>
+            <div style="position:absolute;top:10px;left:0;right:0;display:flex;justify-content:center;gap:18px;z-index:2;">
+              ${
+                related.length
+                  ? related.map(r =>
+                      `<div class="related-dot" title="${r.label}: ${r.twName} (${r.twValue})\nActual: ${r.value}" style="background:${r.twValue};border:2px solid #fff;box-shadow:0 1px 3px #0002;position:relative;">
+                        <span style="display:none;">${r.value}</span>
+                      </div>`
+                    ).join("")
+                  : ""
+              }
+            </div>
+          </div>
+          <div style="text-align:center;font-family:monospace;font-size:1.1em;">${value}</div>
+        </div>
+        <div style="margin:1em 0 0.5em 0;font-weight:500">Tailwind Classes:</div>
+        <div>${
+          classes.length
+            ? classes.map(c =>
+                `<div class="class-preview">
+                  <div class="preview-box" style="${c.type==='Background' ? 'background:'+value : 'background:#fff;color:'+value+';border:1px solid #ddd;'}"></div>
+                  <span class="snippet">${c.class}</span>
+                  <span style="font-size:0.95em;color:#888">${c.type}</span>
+                </div>`
+              ).join("")
+            : "<em>No Tailwind class</em>"
+        }</div>
+        <div style="margin:1em 0 0.5em 0;font-weight:500">JS Snippet:</div>
+        <div>
+          <span class="snippet" id="snippet">${snippet}</span>
+          <button class="copy-btn" id="copySnippetBtn">Copy</button>
+        </div>
+      `;
+      const details = document.getElementById("colorDetails");
+      details.innerHTML = html;
+      details.hidden = false;
+      // Fix copy button event
+      const copyBtn = document.getElementById("copySnippetBtn");
+      if (copyBtn) {
+        copyBtn.onclick = () => {
+          const snippetText = document.getElementById("snippet").textContent;
+          navigator.clipboard.writeText(snippetText);
+        };
+      }
+      if (window.innerWidth < 900) details.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>

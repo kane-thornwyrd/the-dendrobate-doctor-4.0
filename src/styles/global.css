@@ -138,24 +138,7 @@
     position: relative;
   }
 
-  .back-to-top-wrapper {
-    top: 100vh;
-  }
-
-  .back-to-top-link {
-    top: calc(100vh - 5rem);
-    pointer-events: all;
-    position: fixed;
-    position: sticky;
-    @apply -my-6 flex h-16 w-16 cursor-pointer place-content-center place-items-center rounded-full bg-lime-500/25 text-2xl font-black text-stone-900 hover:bg-lime-300;
-
-    &:hover > * {
-      @apply animate-bounce;
-    }
-  }
-
   #toc_container {
     display: table;
-    @apply w-full p-6;
   }
 }

@@ -1,10 +1,12 @@
 ---
+import { ScrollToTocArrow } from "@/components/ui/ScrollToTocArrow"
+
 import "/src/styles/global.css"
 
-import { ScrollUpButton } from "@/components/ArrowScrollUp"
 import Header from "@/components/Header.astro"
 import { AstroFont } from "astro-font"
 import { SEO } from "astro-seo"
+import { ClientRouter, slide } from "astro:transitions"
 
 export interface Props {
   title?: string
@@ -120,16 +122,17 @@ const basedUrl = (url: string) => `${import.meta.env.BASE_URL}/${url}`
         j.async = true
         j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl
         f.parentNode.insertBefore(j, f)
-      })(window, document, "script", "dataLayer", import.meta.env.GTM_KEY)
+      })(window, document, "script", "dataLayer", "GTM_KEY")
     </script>
-  </head>
-  <body>
+
+    <ClientRouter />
+  </head><body class="w-full">
     <Header />
-    <div class="relative md:bg-transparent print:bg-white" }>
-      <main class="max-w-6xl md:px-4 mx-auto backdrop-blur-sm bg-neutral-200/20 print:pt-0 dark:bg-neutral-900/20">
+    <div class="relative bg-white" transition:animate={slide({ duration: "0.4s" })}>
+      <main class="backdrop-blur-sm bg-neutral-200/20 dark:bg-neutral-900/20">
         <slot />
-        <ScrollUpButton />
       </main>
     </div>
+    <ScrollToTocArrow client:only />
   </body>
 </html>

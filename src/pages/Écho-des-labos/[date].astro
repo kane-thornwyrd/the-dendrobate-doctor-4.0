@@ -1,11 +1,14 @@
 ---
+import colors from "@/components/tailwind-colors.json"
+import { TitleEmbossed } from "@/components/ui/title-embossed"
 import Layout from "@/layouts/Layout.astro"
+import { ucFirst } from "@/lib/utils"
 import { getCollection, getEntry } from "astro:content"
 import { experimental_AstroContainer } from "astro/container"
 
 import KissKissBankBankLink from "../../components/kissKissBankBankLink.astro"
 
-const DAYS = [
+export const DAYS = [
   "dimanche",
   "lundi",
   "mardi",
@@ -15,7 +18,7 @@ const DAYS = [
   "samedi",
 ]
 
-const MONTHS = [
+export const MONTHS = [
   "janvier",
   "février",
   "mars",
@@ -41,7 +44,7 @@ export async function getStaticPaths() {
 
 const { date } = Astro.params
 
-const dateToTitle = (d: string) => {
+export const dateToTitle = (d: string) => {
   //@ts-ignore
   const td: Date = new Date(Date.parse(d.replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3T00:00:00Z")))
   return `${DAYS[td.getDay()]} ${td.getDate()} ${MONTHS[td.getMonth()]} ${td.getFullYear()}`
@@ -66,13 +69,22 @@ const anchorHeadings =
     return `<h${index} id="${machineContent}">${content}</h${index}>`
   }
 
-type filterConf = [reg: RegExp | string, transformer: ((a: string, b?: any, c?: any) => string) | string]
+type ReplacerFunction = (...params: any[]) => string
+
+type filterConf = [reg: RegExp | string, transformer: ReplacerFunction | string]
 
 const container = await experimental_AstroContainer.create()
 const kkbbPicture = await container.renderToString(KissKissBankBankLink)
 
 const contentFilters: filterConf[] = [
   [/\<p\>\s*\*\*\*\<\/p\>/gi, ""],
+  [
+    /(?<link>\<a[^h]+href="[^"]+">[^\<]+\<\/a>\s*)\((?<linkinfo>[^)]+)\)/gi,
+    (...params) => {
+      const { link, linkinfo } = params.pop()
+      return link
+    },
+  ],
   [/\<p\>\s*<\/p\>/gi, ""],
   [/\<h(\d)/gi, incrHeadings],
   [
@@ -99,7 +111,7 @@ const contentFilters: filterConf[] = [
   [
     "<p>Bienvenue à tous sur l’Écho des Labos.</p>",
     () => `<p>Bienvenue à tous sur l’Écho des Labos.</p>
-      <div id="toc_container">
+      <div id="toc_container" class="min-w-full">
         <h5 class="toc_title">Index</h5>
         <ol class="toc_list">
         ${headings.join("\n")}
@@ -110,29 +122,35 @@ const contentFilters: filterConf[] = [
 ---
 
 <Layout>
-  <div class="p-4 px-16 w-fit mx-auto bg-neutral-200 dark:bg-neutral-900">
-    <h1
-      class="text-center text-white"
-      style="text-shadow: 0 1px 0 hsl(174,5%,80%),
-	                 0 2px 0 hsl(174,5%,75%),
-	                 0 3px 0 hsl(174,5%,70%),
-	                 0 4px 0 hsl(174,5%,66%),
-	                 0 5px 0 hsl(174,5%,64%),
-	                 0 6px 0 hsl(174,5%,62%),
-	                 0 7px 0 hsl(174,5%,61%),
-	                 0 8px 0 hsl(174,5%,60%),
-	
-	                 0 0 5px rgba(0,0,0, 0.2),
-	                0 1px 3px rgba(0,0,0,0.25),
-	                0 3px 5px rgba(0,0,0,0.25),
-	               0 5px 10px rgba(0,0,0,0.25),
-	              0 10px 10px rgba(0,0,0,0.25),
-	              0 20px 20px rgba(0,0,0,0.35);"
-    >
-      l'Écho des Labos<br < />{dateToTitle(date)}
-    </h1>
-    <div
-      class="prose dark:prose-invert mx-auto prose-headings:font-light prose-h1:text-6xl prose-h2:text-5xl prose-h3:text-4xl prose-h4:text-3xl prose-h5:text-2xl prose-headings:border-b-2 prose-headings:border-t-2 prose-a:text-emerald-900 dark:prose-a:text-emerald-400 prose-headings:border-emerald-900 prose-headings:text-center prose-headings:py-4 prose-headings:bg-neutral-200 dark:prose-headings:bg-emerald-900 dark:prose-headings:shadow-emerald-300 dark:prose-headings:shadow-md"
+  <TitleEmbossed
+    shadowStart={colors.stone[200]}
+    shadowEnd={colors.stone[400]}
+    className="text-center text-stone-100 pt-10"
+    style={{ lineHeight: "0.5" }}
+  >
+    l'Écho des Labos<br /><small class="text-5xl">{ucFirst(dateToTitle(date))}</small>
+  </TitleEmbossed>
+  <div
+    class="prose
+    text-ellipsis
+    text-pretty
+    dark:prose-invert
+    mx-auto
+    px-3
+    prose-headings:font-light
+    prose-headings:border-b-2
+    prose-headings:border-t-2
+    prose-a:text-emerald-900
+    dark:prose-a:text-emerald-400
+    prose-headings:border-emerald-900
+    prose-headings:text-center
+    prose-headings:py-4
+    prose-headings:bg-neutral-200
+    dark:prose-headings:bg-emerald-900
+    dark:prose-headings:shadow-emerald-300
+    dark:prose-headings:shadow-md"
+  >
+    <Fragment
       set:html={contentFilters.reduce(
         (prev: string, current: filterConf) => prev.replace.apply(prev, current as [any, any]),
         entry.data.content

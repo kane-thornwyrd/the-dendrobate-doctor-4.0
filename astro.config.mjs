@@ -18,8 +18,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   // site: "https://www.the-dendrobate-doctor.fr",
-  site: "https://kane-thornwyrd.github.io",
-  base: process.env["NODE_ENV"] === "development" ? "" : "the-dendrobate-doctor-4.0",
+  base: "",
   trailingSlash: "never",
   integrations: [
     mdx({

@@ -1,25 +1,14 @@
 ---
 import { Image } from "astro:assets"
-import { getCollection } from "astro:content"
-import { isAfter, parse } from "node_modules/date-fns"
 
 import DendrobateLogo from "../images/dendrobate.svg"
-import { EdLCalendarDrawer } from "./EdLCalendarDrawer"
-
-const edlDates = (await getCollection("edl"))
-  .map(({ id }): { date: Date; id: string } => ({
-    date: parse(id, "yyyyLLdd", new Date()),
-    id,
-  }))
-  .toSorted((a, b) => (isAfter(a.date, b.date) ? 1 : -1))
-
-const routingParams = Astro.params
+import { EdLCalendarDrawerTrigger } from "./EdLCalendarDrawerTrigger"
 ---
 
-<header id="top" class="relative w-full z-10 bg-transparent">
-  <div class="container p-3 pt-7">
+<header id="top" class="relative z-10 bg-transparent">
+  <div class="container p-3 pt-7 pb-0 mx-auto">
     <h1
-      class="text-white text-6xl text-center"
+      class="text-white text-6xl text-center -z-10"
       style={{
         textShadow: `
           0 0 7px #dc2626,
@@ -41,6 +30,8 @@ const routingParams = Astro.params
         />
       </a>
     </h1>
-    <EdLCalendarDrawer client:load {...{ edlDates, routingParams }} />
+    <div class="flex w-full justify-end">
+      <EdLCalendarDrawerTrigger client:load />
+    </div>
   </div>
 </header>

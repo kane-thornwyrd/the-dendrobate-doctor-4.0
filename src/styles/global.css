@@ -141,4 +141,52 @@
   #toc_container {
     display: table;
   }
+
+  .fold-corner-card {
+    background:
+      -webkit-linear-gradient(225deg, transparent 50%, var(--color-stone-400) 50%),
+      -webkit-linear-gradient(45deg, var(--color-stone-100), var(--color-stone-100)),
+      -webkit-linear-gradient(135deg, var(--color-stone-100), var(--color-stone-100)),
+      -webkit-linear-gradient(225deg, transparent 25px, var(--color-stone-100) 10px);
+    background:
+      -moz-linear-gradient(225deg, transparent 50%, var(--color-stone-400) 50%),
+      -moz-linear-gradient(45deg, var(--color-stone-100), var(--color-stone-100)),
+      -moz-linear-gradient(135deg, var(--color-stone-100), var(--color-stone-100)),
+      -moz-linear-gradient(225deg, transparent 25px, var(--color-stone-100) 10px);
+    background:
+      -o-linear-gradient(225deg, transparent 50%, var(--color-stone-400) 50%),
+      -o-linear-gradient(45deg, var(--color-stone-100), var(--color-stone-100)),
+      -o-linear-gradient(135deg, var(--color-stone-100), var(--color-stone-100)),
+      -o-linear-gradient(225deg, transparent 25px, var(--color-stone-100) 10px);
+    background:
+      linear-gradient(225deg, transparent 50%, var(--color-stone-400) 50%),
+      linear-gradient(45deg, var(--color-stone-100), var(--color-stone-100)),
+      linear-gradient(135deg, var(--color-stone-100), var(--color-stone-100)),
+      linear-gradient(225deg, transparent 25px, var(--color-stone-100) 10px);
+  }
+
+  .fold-corner-card {
+    margin-right: -9px;
+    -webkit-background-size:
+      35px 35px,
+      0 0,
+      0 0,
+      100% 100%;
+    -moz-background-size:
+      35px 35px,
+      0 0,
+      0 0,
+      100% 100%;
+    background-size:
+      35px 35px,
+      0 0,
+      0 0,
+      100% 100%;
+    background-position:
+      100% 0,
+      0 0,
+      100% 100%,
+      100% 0;
+    background-repeat: no-repeat;
+  }
 }

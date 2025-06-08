@@ -1,5 +1,6 @@
 ---
 import colors from "@/components/tailwind-colors.json"
+import { ScrollToTocArrow } from "@/components/ui/ScrollToTocArrow"
 import { TitleEmbossed } from "@/components/ui/title-embossed"
 import Layout from "@/layouts/Layout.astro"
 import { ucFirst } from "@/lib/utils"
@@ -108,8 +109,18 @@ const contentFilters: filterConf[] = [
     "KisskissBankbank (https://www.kisskissbankbank.com/fr/projects/the-dendrobate-doctor)",
     kkbbPicture,
   ],
+  [/\<h\d\>.+FAKE DE LA SEMAINE\<\/h\d\>/gi, "<h2>FAKE DE LA SEMAINE</h2>"],
   [
-    "<p>Bienvenue à tous sur l’Écho des Labos.</p>",
+    /\<p\>\s*Si vous avez aimé cette chronique, n'hésitez pas à la partager sur les réseaux sociaux !\<\/p\>/gi,
+    `<p class="text-center">Si vous avez aimé cette chronique, n'hésitez pas à la partager sur les réseaux sociaux !</p>
+      <div class="flex justify-center">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https://www.the-dendrobate-doctor.fr/echo-des-labos/${date}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-lg mr-2">Partager sur Facebook</a>
+        <a href="https://twitter.com/intent/tweet?url=https://www.the-dendrobate-doctor.fr/echo-des-labos/${date}" target="_blank" rel="noopener noreferrer" class="bg-blue-400 text-white px-4 py-2 rounded-lg">Partager sur Twitter</a>
+      </div>`,
+  ],
+  ["Si elle disparait, retrouvez la chronique sur le blog (https://www.the-dendrobate-doctor.fr/)", ""],
+  [
+    /\<p\>Bienvenue à tous sur l’É|Echo des Labos.\<\/p\>/,
     () => `<p>Bienvenue à tous sur l’Écho des Labos.</p>
       <div id="toc_container" class="min-w-full">
         <h5 class="toc_title">Index</h5>
@@ -119,24 +130,26 @@ const contentFilters: filterConf[] = [
       </div>`,
   ],
 ]
+console.log(headings)
 ---
 
 <Layout>
   <TitleEmbossed
-    shadowStart={colors.stone[200]}
-    shadowEnd={colors.stone[400]}
+    shadowStart={colors.stone[300]}
+    shadowEnd={colors.stone[800]}
     className="text-center text-stone-100 pt-10"
     style={{ lineHeight: "0.5" }}
   >
     l'Écho des Labos<br /><small class="text-5xl">{ucFirst(dateToTitle(date))}</small>
   </TitleEmbossed>
   <div
-    class="prose
+    class="container bg-stone-100/85 rounded-4xl prose
     text-ellipsis
     text-pretty
     dark:prose-invert
     mx-auto
-    px-3
+    py-6
+    prose-p:px-6
     prose-headings:font-light
     prose-headings:border-b-2
     prose-headings:border-t-2
@@ -156,5 +169,6 @@ const contentFilters: filterConf[] = [
         entry.data.content
       )}
     />
+    <ScrollToTocArrow client:only />
   </div>
 </Layout>

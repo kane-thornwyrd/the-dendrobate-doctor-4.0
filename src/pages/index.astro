@@ -2,6 +2,7 @@
 import "../styles/global.css"
 
 import { EdlCarousel, type EdlItem } from "@/components/ui/carousel"
+import { EdLCalendarDrawerProvider } from "@/context/EdLCalendarDrawerContext"
 import { getCollection } from "astro:content"
 import { isAfter, parse } from "date-fns"
 
@@ -37,12 +38,14 @@ const edlDates = (await getCollection("edl"))
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
   }
 </script>
-<Layout>
-  <div class="prose prose-h1:text-6xl prose-headings:mb-0 mx-auto">
-    <h1 class="text-center pt-6 pb-0 mb-0">L'Écho des Labos</h1>
-    <EdlCarousel items={edlDates} client:visible />
-    <div class="max-w-10/12 mx-auto pb-10">
-      <Welcome />
+<EdLCalendarDrawerProvider>
+  <Layout>
+    <div class="container bg-stone-100/85 rounded-4xl prose prose-h1:text-6xl prose-headings:mb-0 mx-auto">
+      <h1 class="text-center pt-6 pb-0 mb-0">L'Écho des Labos</h1>
+      <EdlCarousel items={edlDates} client:load />
+      <div class="max-w-10/12 mx-auto pb-10">
+        <Welcome />
+      </div>
     </div>
-  </div>
-</Layout>
+  </Layout>
+</EdLCalendarDrawerProvider>

@@ -11,7 +11,10 @@ export const ucFirst = (s: string, locales?: Intl.LocalesArgument): string =>
 
 export const head = <T>([head, ..._]: T[]): T => head
 export const tail = <T>([_, ...tail]: T[]): T[] => tail
-export const last = <T>(a: T[]): T => a[a.length - 1]
+export const last = <T>(a: T[]): T => (a.length > 1 ? last(tail(a)) : head(a))
+export const push =
+  <T>(x: T) =>
+  (a: T[]): T[] => [...a, x]
 
 export const useWindow = (): Window | undefined => {
   const [win, setWin] = useState<Window | undefined>(undefined)

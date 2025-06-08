@@ -9,11 +9,11 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer"
 import { last } from "@/lib/utils"
+import { $edlCalendarDrawerOpen, closeEdlCalendarDrawer } from "@/stores/edlCalendarDrawer"
+import { useStore } from "@nanostores/react"
 import { navigate } from "astro:transitions/client"
-import { Calendar } from "lucide-react"
 import { useState } from "react"
 
 import { EdLCalendar } from "./EdLCalendar"
@@ -28,19 +28,15 @@ export const EdLCalendarDrawer = ({
   routingParams,
 }: {
   edlDates: Edition[]
-  routingParams: { [key: string]: unknown }
+  routingParams?: { [key: string]: unknown }
 }) => {
   const [currentEdition, setCurrentEdition] = useState<string>(
     routingParams?.date !== undefined ? (routingParams.date as string) : last(edlDates).id,
   )
+  const open = useStore($edlCalendarDrawerOpen)
 
   return (
-    <Drawer dismissible={false}>
-      <DrawerTrigger asChild>
-        <Button variant="outline" className="float-right">
-          Agenda des éditions <Calendar />
-        </Button>
-      </DrawerTrigger>
+    <Drawer open={open} onOpenChange={open => (open ? undefined : closeEdlCalendarDrawer())}>
       <DrawerContent>
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader className="text-center">
@@ -52,7 +48,6 @@ export const EdLCalendarDrawer = ({
             <DrawerClose asChild>
               <Button
                 onClick={() => {
-                  // Astro.redirect(`Écho-des-labos/${currentEdition}`)
                   navigate(`/Écho-des-labos/${currentEdition}`)
                 }}
               >

@@ -1,11 +1,14 @@
 import { Button } from "@/components/ui/button"
-import type { RenderedContent } from "astro:content"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { last, push } from "@/lib/utils"
+import { navigate } from "astro:transitions/client"
+import { ChevronLeft, ChevronRight, ArrowBigDown as LinkIcon, Loader2 } from "lucide-react"
 import { DateTime } from "luxon"
 import React, { useEffect, useRef, useState } from "react"
 
-export type EdlItem = { date: Date; id: string; content: RenderedContent | string | undefined }
-export type EdlCarouselProps = { items: EdlItem[]; height?: string }
+import { EdLCalendarDrawerTrigger } from "../EdLCalendarDrawerTrigger"
+
+export type EdlItem = { date: Date; id: string; content: string }
+export type EdlCarouselProps = { items: EdlItem[] }
 
 function getSlidesPerPage() {
   if (typeof window === "undefined") return 1
@@ -17,10 +20,21 @@ function getSlidesPerPage() {
   return 1
 }
 
-export function EdlCarousel({ items, height = "h-48" }: EdlCarouselProps) {
+const isAEdl = (item: unknown): item is EdlItem =>
+  item !== null &&
+  typeof item === "object" &&
+  "id" in item &&
+  typeof (item as { id: string }).id === "string" &&
+  (item as { id: string }).id.length > 0 &&
+  "content" in item &&
+  (typeof (item as { content: string | undefined }).content === "string" ||
+    (item as { content: string | undefined }).content === undefined)
+
+export function EdlCarousel({ items }: EdlCarouselProps) {
   const limitedItems = items.slice(0, 10)
   const [page, setPage] = useState(0)
   const [slidesPerPage, setSlidesPerPage] = useState(() => getSlidesPerPage())
+  const [loadingId, setLoadingId] = useState<string | null>(null)
   const touchStartX = useRef<number | null>(null)
   const touchEndX = useRef<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -34,8 +48,9 @@ export function EdlCarousel({ items, height = "h-48" }: EdlCarouselProps) {
     return () => window.removeEventListener("resize", handleResize)
   }, [])
 
-  const totalPages = Math.ceil(limitedItems.length / slidesPerPage)
+  const editionsRegistered = [...limitedItems, { id: "" }]
 
+  const totalPages = Math.ceil(editionsRegistered.length / slidesPerPage)
   useEffect(() => {
     if (page > totalPages - 1) {
       setPage(Math.max(0, totalPages - 1))
@@ -65,83 +80,110 @@ export function EdlCarousel({ items, height = "h-48" }: EdlCarouselProps) {
 
   const start = page * slidesPerPage
   const end = start + slidesPerPage
-  const visibleItems = limitedItems.slice(start, end)
+  const visibleItems = editionsRegistered.slice(start, end)
 
   return (
-    <div className="w-full z-50">
+    <div className="w-full z-50 h-full">
       <div className="flex items-center gap-2">
         <Button
-          className={`px-2 rounded bg-gray-100 border disabled:opacity-40 transition-all ${height} min-h-[48px]`}
+          className={`rounded-l-none hover:bg-emerald-700`}
           onClick={() => setPage(p => Math.max(0, p - 1))}
           disabled={!canPrev}
           aria-label="Précédent"
-          variant="outline"
+          variant="secondary"
           size="icon"
         >
           <ChevronLeft className="w-6 h-6" />
         </Button>
         <div
-          className={`overflow-hidden w-full ${height} flex-1`}
+          className={`w-full flex-1 h-full`}
           ref={containerRef}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div className={`flex gap-1 w-full h-full items-stretch justify-center`}>
-            {visibleItems.map(item => (
-              <div
-                key={item.id}
-                className={`
-                  shadow-lg border border-gray-200
-                  flex flex-col items-stretch justify-start
+          <div className={`relative flex gap-1 w-full h-full items-stretch justify-center `}>
+            {visibleItems.map(item =>
+              isAEdl(item) ? (
+                <div
+                  key={item.id}
+                  className={`
+                  relative flex flex-col items-stretch justify-start
                   overflow-hidden
-                  relative
                   mx-2
-                  ${height}
                   min-w-0
                   transition
+                  shadow-neutral-950/30
+                  shadow-2xl
+                  prose-p:mb-0
                 `}
-                style={{
-                  width: `calc(100% / ${slidesPerPage})`,
-                  minWidth: 0,
-                }}
-              >
-                {/* Header date façon calendrier */}
-                <div className="bg-emerald-800 text-white text-center py-2 px-2 font-bold text-md border-b-2 border-emerald-900">
-                  {DateTime.fromFormat(item.id, "yyyyLLdd").setLocale("fr").toLocaleString(DateTime.DATE_MED)}
-                </div>
-                {/* Contenu façon note */}
-                <div className="flex-1 flex flex-col justify-center items-center px-2 py-0">
-                  <div className="text-gray-700 text-base text-center font-mono whitespace-pre-line">
-                    <p className="mt-0 text-sm">
-                      {(item.content as string).match(/\<p\>([^\<]+)\<\/p\>/i)
-                        ? (item.content as string).match(/\<p\>([^\<]+)\<\/p\>/i)![1].substring(29)
-                        : ""}
-                    </p>
+                  style={{
+                    width: `calc(100% / ${slidesPerPage})`,
+                    minWidth: 0,
+                  }}
+                >
+                  <div className="fold-corner-card text-center font-bold text-md">
+                    {DateTime.fromFormat(item.id, "yyyyLLdd").setLocale("fr").toLocaleString(DateTime.DATE_MED)}
+                  </div>
+                  <div className="bg-stone-100 flex-1 flex flex-col justify-center items-center px-2 py-0">
+                    <div className="text-gray-700 text-base text-center font-mono whitespace-pre-line">
+                      <p className="mt-0 text-sm">
+                        {(item.content as string).match(/\<p\>([^\<]+)\<\/p\>/i) ? (
+                          (item.content as string).match(/\<p\>([^\<]+)\<\/p\>/i)![1].substring(29)
+                        ) : item.content !== undefined ? (
+                          <p>{item.content}</p>
+                        ) : (
+                          ""
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      className="w-full bg-emerald-600 text-stone-100 m-3"
+                      aria-label={`Voir la page de ${item.id}`}
+                      onClick={e => {
+                        setLoadingId(item.id)
+                        navigate(`/Écho-des-labos/${item.id}`)
+                      }}
+                      disabled={loadingId === item.id}
+                    >
+                      {loadingId === item.id ? <Loader2 className="animate-spin" /> : <LinkIcon />}
+                    </Button>
                   </div>
                 </div>
-                {/* Optionnel : effet coin plié */}
-                <div className="absolute right-0 top-0 w-8 h-8 bg-blue-100 rounded-bl-xl -z-10"></div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={`${last(visibleItems).id}-after`}
+                  className={`
+    flex flex-col items-stretch justify-center
+    overflow-hidden
+    mx-2
+    min-w-0
+    h-52
+    prose-p:mb-0
+  `}
+                >
+                  <EdLCalendarDrawerTrigger className="self-center bg-emerald-600 font-black" />
+                </div>
+              ),
+            )}
           </div>
         </div>
         <Button
-          className={`px-2 rounded bg-gray-100 border disabled:opacity-40 transition-all ${height} min-h-[48px]`}
+          className={`rounded-r-none hover:bg-emerald-700`}
           onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
           disabled={!canNext}
           aria-label="Suivant"
-          variant="outline"
+          variant="secondary"
           size="icon"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight />
         </Button>
       </div>
       <div className="flex justify-center mt-4 gap-1">
         {Array.from({ length: totalPages }).map((_, i) => (
           <Button
             key={i}
-            className={`w-2 h-2 rounded-full p-0 ${i === page ? "bg-blue-500" : "bg-gray-300"}`}
+            className={`w-2 h-2 rounded-full p-0 ${i === page ? "bg-emerald-500" : "bg-emerald-900/20"}`}
             onClick={() => setPage(i)}
             aria-label={`Aller à la page ${i + 1}`}
             variant={i === page ? "default" : "ghost"}

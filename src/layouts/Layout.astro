@@ -3,10 +3,13 @@ import { ScrollToTocArrow } from "@/components/ui/ScrollToTocArrow"
 
 import "/src/styles/global.css"
 
+import { EdLCalendarDrawer } from "@/components/EdLCalendarDrawer"
 import Header from "@/components/Header.astro"
 import { AstroFont } from "astro-font"
 import { SEO } from "astro-seo"
+import { getCollection } from "astro:content"
 import { ClientRouter, slide } from "astro:transitions"
+import { isAfter, parse } from "date-fns"
 
 export interface Props {
   title?: string
@@ -21,6 +24,15 @@ const { frontmatter, title: baseTitle } = Astro.props
 const title = baseTitle ?? frontmatter?.title
 
 const basedUrl = (url: string) => `${import.meta.env.BASE_URL}/${url}`
+
+const edlDates = (await getCollection("edl"))
+  .map(({ id }): { date: Date; id: string } => ({
+    date: parse(id, "yyyyLLdd", new Date()),
+    id,
+  }))
+  .toSorted((a, b) => (isAfter(a.date, b.date) ? 1 : -1))
+
+const routingParams = Astro.params
 ---
 
 <!doctype html>
@@ -126,13 +138,13 @@ const basedUrl = (url: string) => `${import.meta.env.BASE_URL}/${url}`
     </script>
 
     <ClientRouter />
-  </head><body class="w-full">
+  </head><body class="w-full dark:prose-p:text-slate-400">
     <Header />
-    <div class="relative bg-white" transition:animate={slide({ duration: "0.4s" })}>
-      <main class="backdrop-blur-sm bg-neutral-200/20 dark:bg-neutral-900/20">
+    <div class="relative" transition:animate={slide({ duration: "0.4s" })}>
+      <main>
         <slot />
       </main>
     </div>
-    <ScrollToTocArrow client:only />
+    <EdLCalendarDrawer {...{ edlDates, routingParams }} client:load />
   </body>
 </html>

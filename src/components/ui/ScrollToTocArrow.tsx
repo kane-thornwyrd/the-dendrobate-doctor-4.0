@@ -37,19 +37,19 @@ export function ScrollToTocArrow() {
   }
 
   return (
-    <button
-      ref={btnRef}
-      aria-label="Scroll to Table of Contents"
-      onClick={handleClick}
-      className={`
-        sticky bottom-6 right-6 z-50
-        bg-emerald-700 text-white rounded-full shadow-lg p-3
-        transition-transform duration-1000
-        ml-auto translate-y-24 pointer-events-none
-      `}
-      style={{ transitionProperty: "opacity, transform" }}
-    >
-      <ChevronUp className="w-7 h-7" />
-    </button>
+    <div className="w-full sticky bottom-24 z-50 pointer-events-none">
+      <button
+        ref={btnRef}
+        aria-label="Scroll to Table of Contents"
+        onClick={handleClick}
+        className={`absolute right-6 
+            bg-emerald-700 text-white rounded-full shadow-lg p-3
+            transition-all duration-1000
+            ml-auto translate-y-24 pointer-events-none
+          `}
+      >
+        <ChevronUp className="w-7 h-7" />
+      </button>
+    </div>
   )
 }
